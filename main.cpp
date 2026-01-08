@@ -67,22 +67,23 @@ public:
     }
 
     std::vector<unsigned char> readBinaryFile(const std::string& filename) {
-
         std::ifstream file(filename, std::ios::binary);
-        if(!file) return {};
-        file.unsetf(std::ios::skipws);
 
+        if (!file) return {};
+
+        file.unsetf(std::ios::skipws);
         file.seekg(0, std::ios::end);
         std::streampos fileSize = file.tellg();
         file.seekg(0, std::ios::beg);
 
-        std::vector<unsigned char> output;
-        output.reserve(fileSize);
-        output.insert(output.begin(),
-            std::istreambuf_iterator<char>(file),
-            std::istreambuf_iterator<char>());
 
-        return output;
+        std::vector<unsigned char> vec;
+        vec.reserve(fileSize);
+        vec.insert(vec.begin(), 
+                std::istreambuf_iterator<char>(file), 
+                std::istreambuf_iterator<char>());
+
+        return vec;
     }
 };
 
@@ -93,8 +94,8 @@ int main() {
     inp = tolower(inp);
 
     CryptoManager m;
-    
     std::string plc;
+
     std::ifstream priv("priv.pem");
     std::string privKey = "";
 
@@ -115,10 +116,10 @@ int main() {
 
     EVP_PKEY_ptr pubptr = m.loadPublicKey(pubKey);
 
-    std::ofstream outp("result");
     std::vector<unsigned char> directOut;
     std::string res;
     if(inp == 'e') {
+        std::ofstream outp("result.bin");
         std::string p;
         std::cin >> p;
         directOut = m.encrypt(pubptr.get(), p);
@@ -128,10 +129,12 @@ int main() {
 
         outp.close();
     } else {
-        std::cout << "give input in file named 'input'. press enter when ready. ";
+        std::cout << "give input in file named 'result.bin'. press enter when ready. ";
         std::cin >> res;
 
-        directOut = m.readBinaryFile("input");
+        directOut = m.readBinaryFile("result.bin");
+        if(directOut.size() > 128) directOut.erase(--directOut.end());
+        std::cout << "directOut length : " << directOut.size() << std::endl;
 
         res = m.decrypt(privptr.get(), directOut);
 

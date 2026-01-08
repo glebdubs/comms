@@ -3,3 +3,5 @@ crypto_tool
 result
 priv.pem
 public.pem
+input.bin
+result.bin
