@@ -1,5 +1,3 @@
-// C++ program to illustrate the client application in the
-// socket programming
 #include <cstring>
 #include <iostream>
 #include <netinet/in.h>
@@ -34,16 +32,25 @@ int main()
         return -1;
     }
 
-    // sending connection request
-    connect(clientSocket, (struct sockaddr*)&serverAddress,
-            sizeof(serverAddress));
+    std::cout << "connected. \n";
+
+    // getting user input on what to send
+    std::string orig;
+    std::cin >> orig;
+
+    char buffer[1024] = {0};
 
     // sending data
-    const char* message = "hi server";
+    const char* message = orig.c_str();
 
     std::cout << "sending...\n";
     send(clientSocket, message, strlen(message), 0);
     std::cout << "sent.\n";
+
+    ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+    if(bytesRead > 0) {
+        std::cout << "return message from server : " << buffer << std::endl;
+    }
 
     // closing socket
     close(clientSocket);

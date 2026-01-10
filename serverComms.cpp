@@ -48,6 +48,9 @@ int main()
         std::cout << "message from client : " << buffer << std::endl;
     }
 
+    const char* returnMessage = "yup we got you twin";
+    send(clientSocket, returnMessage, strlen(returnMessage), 0);
+
     close(clientSocket);
     close(serverSocket);
 
