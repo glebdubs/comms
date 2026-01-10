@@ -5,3 +5,5 @@ priv.pem
 public.pem
 input.bin
 result.bin
+client
+server
