@@ -38,3 +38,12 @@ void Comms::sendMessage(std::string m) { // ADD ENCRYPTION PROCESS TO THIS
     const char* msg = m.c_str();
     send(clientSocket, msg, strlen(msg), 0);
 }
+
+bool Comms::doesThisFileExist(const std::string& name) {
+    if(FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}

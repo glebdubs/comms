@@ -36,6 +36,7 @@ int main()
 
     // getting user input on what to send
     std::string orig;
+    std::cout << "enter the message to send : ";
     std::cin >> orig;
 
     char buffer[1024] = {0};

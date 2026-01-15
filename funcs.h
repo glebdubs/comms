@@ -18,5 +18,6 @@ public:
     void ping();
     std::string getMessage();
     void sendMessage(std::string m);
+    bool doesThisFileExist(const std::string& name);
 
 };

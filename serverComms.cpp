@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+std::vector<std::string> getWords(char* orig)  {
+    // TO IMPLEMENT
+}
+
 int main()
 {
     // creating socket
@@ -16,16 +20,19 @@ int main()
         return -1;
     }
 
+    // <serverspecific>
     int opt = 1;
     setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    // </serverspecific>
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
+    // <serverspecific>
     if(bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
-        perror("bind faioled, try a different port or check if its in use.");
+        perror("bind failed, try a different port or check if its in use.");
         return -1;
     }
 
@@ -42,10 +49,19 @@ int main()
         return -1;
     }
 
-    char buffer[1024] = {0};
-    ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if(bytesRead > 0) {
-        std::cout << "message from client : " << buffer << std::endl;
+    std::string orig = "";
+    while(orig != "quit") {
+        char buffer[1024] = {0};
+        ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+        if(bytesRead > 0) {
+            std::cout << "message from client : " << buffer << std::endl;
+            
+            
+        } else {
+            orig = "quit";
+            std::cout << "shutting down server. \n";
+        }
+
     }
 
     const char* returnMessage = "yup we got you twin";
@@ -56,34 +72,4 @@ int main()
 
     return 0;
 
-    // // specifying the address
-    // sockaddr_in serverAddress;
-    // serverAddress.sin_family = AF_INET;
-    // serverAddress.sin_port = htons(8080);
-
-    // if(inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) <= 0) {
-    //     std::cerr << "invalid address / address not supported \n";
-    //     return -1;
-    // }
-
-    // // binding socket.
-    // bind(serverSocket, (struct sockaddr*)&serverAddress,
-    //      sizeof(serverAddress));
-
-    // // listening to the assigned socket
-    // listen(serverSocket, 5);
-
-    // // accepting connection request
-    // int clientSocket = accept(serverSocket, nullptr, nullptr);
-
-    // // recieving data
-    // char buffer[1024] = { 0 };
-    // recv(clientSocket, buffer, sizeof(buffer), 0);
-    // cout << "Message from client: " << buffer
-    //           << endl;
-
-    // // closing the socket.
-    // close(serverSocket);
-
-    // return 0;
 }
