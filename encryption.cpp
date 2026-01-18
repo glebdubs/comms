@@ -1,6 +1,6 @@
 #include "encryption.h"
 
-// compile with g++ main.cpp -o crypto_tool -lcrypto
+// COMPILE WITH g++ encryption.cpp -o crypto_tool -lcrypto
 
 CryptoManager::EVP_PKEY_ptr CryptoManager::loadPublicKey(const std::string& pem) {
     BIO_ptr bio(BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), BIO_free_all);
@@ -71,7 +71,7 @@ std::vector<unsigned char> CryptoManager::readBinaryFile(const std::string& file
     return vec;
 }
 
-bool doesThisFileExist(const std::string& name) {
+bool CryptoManager::doesThisFileExist(const std::string& name) {
     if(FILE *file = fopen(name.c_str(), "r")) {
         fclose(file);
         return true;
@@ -80,11 +80,11 @@ bool doesThisFileExist(const std::string& name) {
     }
 }
 
-CryptoManager::EVP_PKEY_ptr loadPrivateKeyFromFile(const std::string& name, CryptoManager& manager) {
+CryptoManager::EVP_PKEY_ptr CryptoManager::loadPrivateKeyFromFile(const std::string& name, CryptoManager& manager) {
     // opening private key
     if(!doesThisFileExist(name)) {
-        std::cerr << "Place the PRIVATE key in a file called priv.pem in the same folder as this executable. Do not give it to anyone or distribute it. If anyone else may know it, generate a new public/private key pair.\n";
-        std::exit;
+        std::cerr << "Place the PRIVATE key in a file called private.pem in the same folder as this executable. Do not give it to anyone or distribute it. If anyone else may know it, generate a new public/private key pair.\n";
+        std::exit(-1);
     }
 
     std::ifstream priv(name);
@@ -98,12 +98,12 @@ CryptoManager::EVP_PKEY_ptr loadPrivateKeyFromFile(const std::string& name, Cryp
     return manager.loadPrivateKey(privKey);
 }
 
-CryptoManager::EVP_PKEY_ptr loadPublicKeyFromFile(const std::string& name, CryptoManager& manager) {
+CryptoManager::EVP_PKEY_ptr CryptoManager::loadPublicKeyFromFile(const std::string& name, CryptoManager& manager) {
 
     std::string plc;
     if(!doesThisFileExist("public.pem")) {
-        std::cerr << "Place the PUBLIC key in a file called priv.pem in the same folder as this executable. \n";
-        std::exit;
+        std::cerr << "Place the PUBLIC key in a file called public.pem in the same folder as this executable. \n";
+        std::exit(-1);
     }
 
     std::ifstream pub("public.pem");
@@ -114,9 +114,11 @@ CryptoManager::EVP_PKEY_ptr loadPublicKeyFromFile(const std::string& name, Crypt
     }
     pub.close();
 
+    plaintextPublicKey = pubKey;
+
     return manager.loadPublicKey(pubKey);
 }
-
+/*
 int main() {
     
     CryptoManager m;
@@ -169,3 +171,4 @@ int main() {
     return 0;
 
 }
+*/

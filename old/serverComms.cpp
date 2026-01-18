@@ -1,5 +1,3 @@
-// C++ program to show the example of server application in
-// socket programming
 #include <cstring>
 #include <iostream>
 #include <netinet/in.h>
@@ -51,11 +49,11 @@ int main()
 
     std::string orig = "";
     while(orig != "quit") {
-        char buffer[1024] = {0};
+        unsigned char buffer[1024] = {0};
         ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
         if(bytesRead > 0) {
             std::cout << "message from client : " << buffer << std::endl;
-            
+
             
         } else {
             orig = "quit";
