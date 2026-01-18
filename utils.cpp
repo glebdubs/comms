@@ -1,6 +1,6 @@
 #include "utils.h"
 
-Comms::Comms(char state, const char* ip, CryptoManager& m, const char* publicFN, const char* privateFN) 
+Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN, const char* privateFN) 
     : clientSocket(-1), serverSocket(-1), manager(&m),
       publicKey(nullptr, &EVP_PKEY_free), 
       privateKey(nullptr, &EVP_PKEY_free),
@@ -99,16 +99,15 @@ bool Comms::ping() {
     Comms::sendMessage("ping");
     if(Comms::getMessage() == "return ping")  {
         return true;
-    } else return false;
+    }
+    return false;
 }
 
 std::string Comms::getMessage() {
     char buffer[1024] = {0};
 
     ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if(bytesRead > 0) {
-        return buffer;
-    }
+    return buffer;
 }
 
 void Comms::sendMessage(std::string m) { // ADD ENCRYPTION PROCESS TO THIS

@@ -26,8 +26,8 @@ private:
 
 public:
     Comms(char state, 
-        const char* ip = "192.168.20.30",  // default ip value is my own raspi
         CryptoManager& m,
+        const char* ip = "192.168.20.30",  // default ip value is my own raspi
         const char* publicFN = "public.pem",
         const char* privateFN = "private.pem");
     bool ping();

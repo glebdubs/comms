@@ -8,7 +8,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
     int opt;
-    char state = 'c';
+    char state = 's';
     bool verbose = false;
     const char* ip = "";
 
@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         if(opt == 's' || opt == 'c') state = opt;
 
         else if(opt == 'h') {
-            std::cout << "'s' : Boot as a server. 'c' : Boot as a client. 'v' : Verbose.\n";
+            std::cout << "'s' : Boot as a server. 'c' : Boot as a client. 'v' : Verbose." << std::endl;;
             return 0;
         } 
 
@@ -28,9 +28,10 @@ int main(int argc, char* argv[]) {
     }
 
     unique_ptr<Comms> c;
+    CryptoManager m;
 
-    if(ip == "") c = make_unique<Comms>(state, ip);
-    else         c = make_unique<Comms>(state);
+    if(ip == "") c = make_unique<Comms>(state, m, ip);
+    else         c = make_unique<Comms>(state, m);
 
     if(state == 's') {
 
