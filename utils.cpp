@@ -44,26 +44,26 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
             std::exit(-1);
         }
 
-	std::cout << "Accepted, connecting... \n";
+        std::cout << "Accepted, connecting... \n";
 
         // await ping to ensure connection stability.
  
         std::string pingMessage = getMessage();
-	if(pingMessage == "ping") {
-		sendMessage("return ping");
-		std::cout << "Plaintext connection stable. Encrypting... \n";
+        if(pingMessage == "ping") {
+            sendMessage("return ping");
+            std::cout << "Plaintext connection stable. Encrypting... \n";
+            getMessage();
+            sendMessage(manager->plaintextPublicKey);
+        } else {
+            sendMessage("return ping");
+            std::cout << "Connection unstable. Attempting encryption... \n";
+            getMessage();
+            sendMessage(manager->plaintextPublicKey);
 
-		getMessage();
-
-		sendMessage(manager->plaintextPublicKey);
-	} else {
-		sendMessage("return ping");
-		std::cout << "Connection unstable. Attempting encryption... \n";
-
-		getMessage();
-
-		sendMessage(manager->plaintextPublicKey);
         }
+
+        std::string keyData = Comms::getMessage();
+        foreignPublicKey = manager->loadPublicKey(keyData);
 
 
     } else if(state == 'c') {
@@ -102,8 +102,9 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
 
 	sendMessage("ready_for_key");
 	std::string keyData = Comms::getMessage();
+    foreignPublicKey = manager->loadPublicKey(keyData);
 
-        foreignPublicKey = manager->loadPublicKey(keyData);
+    Comms::sendEncryptedMessage(manager->plaintextPublicKey);
 
     }
 

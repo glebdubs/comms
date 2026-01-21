@@ -1,11 +1,11 @@
 a.out
 crypto_tool
 result
-priv.pem
-public.pem
+*.pem
 input.bin
 result.bin
 client
 server
 *.swp
 *.o
+.DS_Store
