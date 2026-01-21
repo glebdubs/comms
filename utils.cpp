@@ -55,7 +55,7 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
             std::cout << "Connection unstable. Attempting encryption... \n";
         }
 
-        sendMessage(manager->plaintextPublicKey);
+        // sendMessage(manager->plaintextPublicKey);
 
 
     } else if(state == 'c') {
@@ -64,7 +64,7 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
         clientSocket = socket(AF_INET, SOCK_STREAM, 0);
         if(clientSocket < 0) {
             std::cerr << "Error reading socket. \n";
-            return;
+            std::exit(-1);
         }
 
         // specifying address
@@ -74,21 +74,25 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
         // verifying address validity
         if(inet_pton(AF_INET, ip, &serverAddress.sin_addr) <= 0) {
             std::cerr << "Invalid Address / Address not supported. \n";
-            return;
+            std::exit(-1);
         }
 
-        // std::cout << "Connecting... \n";
+        std::cout << "Connecting... \n";
 
         if(connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
             std::cerr << "Connection failed. Is the server running, dumbass? \n";
-            return;
+            std::exit(-1);
         }
 
+        std::cout << "Connected. \n";
+
         // running a ping circuit to server and back to ensure connection consistency
-        if(Comms::ping()) std::cout << "Connection successfully established. \n";
-        else {
-            std::cout << "Ping failed. Connection successful, although may be inconsistent. Take care. \n";
-        }
+        // if(Comms::ping()) std::cout << "Connection successfully established. \n";
+        // else {
+        //     std::cout << "Ping failed. Connection successful, although may be inconsistent. Take care. \n";
+        // }
+
+        // foreignPublicKey = m.loadPublicKey(getMessage());
 
     }
 

@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     bool verbose = false;
     const char* ip = "";
 
-    while(int opt = getopt(argc, argv, "schva:") != -1) {
+    while((opt = getopt(argc, argv, "schva:")) != -1) {
         if(opt == 's' || opt == 'c') state = opt;
 
         else if(opt == 'h') {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     unique_ptr<Comms> c;
     CryptoManager m;
 
-    if(ip == "") c = make_unique<Comms>(state, m, ip);
+    if(ip != "") c = make_unique<Comms>(state, m, ip);
     else         c = make_unique<Comms>(state, m);
 
     if(state == 's') {

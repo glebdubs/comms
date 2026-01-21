@@ -7,3 +7,5 @@ input.bin
 result.bin
 client
 server
+*.swp
+*.o
