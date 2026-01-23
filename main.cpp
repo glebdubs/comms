@@ -11,6 +11,9 @@ int main(int argc, char* argv[]) {
     char state = 's';
     bool verbose = false;
     const char* ip = "";
+    
+    unique_ptr<Comms> c;
+    CryptoManager m;
 
     while((opt = getopt(argc, argv, "schva:")) != -1) {
         if(opt == 's' || opt == 'c') state = opt;
@@ -27,15 +30,27 @@ int main(int argc, char* argv[]) {
         else return 1;
     }
 
-    unique_ptr<Comms> c;
-    CryptoManager m;
+    if(ip == "") ip = "192.168.20.30"; // my default rpi ip, change if you're using this yourself.
 
-    if(ip != "") c = make_unique<Comms>(state, m, ip);
-    else         c = make_unique<Comms>(state, m);
-
+    c = make_unique<Comms>(state, m, ip, verbose);
+    
     if(state == 's') {
 
         // boot & act as server
+
+        if(c->pid == 0) {
+            dup2(c->ptc[0], STDIN_FILENO);
+            dup2(c->ctp[1], STDOUT_FILENO);
+
+            close(c->ptc[1]);
+            close(c->ctp[0]);
+
+            // this branch gets replaced w the shell interface
+            execl("/bin/sh", "sh", NULL);
+        }
+
+        close(c->ptc[0]);
+        close(c->ctp[1]);
 
         cout << "Server online at ip : " << c->getOwnIP() << "\n";
 
@@ -47,15 +62,31 @@ int main(int argc, char* argv[]) {
             message = c->getEncryptedMessage();
             cout << "message from client : " << message << "\n";
 
+            
             if(message == "quit") {
                 running = false;
                 response = "Quitting now...\n";
-
+                c->sendEncryptedMessage(response);
+                
             } else if (message == "mr penis") {
                 response = "mr balls\n";
+                c->sendEncryptedMessage(response);
+            } else {
+                write(c->ptc[1], message.c_str(), message.length());
+
+                char buffer[896];
+                response = "";
+                ssize_t bytesRead;
+
+                while((bytesRead = read(c->ctp[0], buffer, sizeof(buffer)-1)) > 0) {
+                    buffer[bytesRead] = '\0';
+                    response = buffer;
+                    c->sendEncryptedMessage(response);
+                }
+                
             }
-            cout << "response : " << response << "\n";
-            c->sendEncryptedMessage(response);
+            // cout << "response : " << response << "\n";
+            // c->sendEncryptedMessage(response);
         }
 
 
@@ -63,18 +94,28 @@ int main(int argc, char* argv[]) {
 
         // boot & act as client
 
-        cout << "Client online, communicating with " << ip << "\n";
+        cout << "Client online, communicating with " << c->ip << "\n";
 
         string message = "";
         string response;
         bool running = true;
+        ssize_t last;
 
         while(message != "quit" && running) {
             cout << ">>>  ";
-            cin >> message;
+
+            if (!std::getline(std::cin, message)) break;
+            last = message.find_last_not_of(" \t\n\r");
+
+            if(last != std::string::npos) message = message.substr(0, last+1);
+            else continue;
+
             c->sendEncryptedMessage(message);
             response = c->getEncryptedMessage();
-            cout << response;
+
+            if(response != "")
+                cout << "Response from server: " << response;
+
             if(message == "quit") running = false;
         }
 

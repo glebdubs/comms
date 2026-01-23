@@ -101,12 +101,12 @@ CryptoManager::EVP_PKEY_ptr CryptoManager::loadPrivateKeyFromFile(const std::str
 CryptoManager::EVP_PKEY_ptr CryptoManager::loadPublicKeyFromFile(const std::string& name, CryptoManager& manager) {
 
     std::string plc;
-    if(!doesThisFileExist("public.pem")) {
+    if(!doesThisFileExist(name)) {
         std::cerr << "Place the PUBLIC key in a file called public.pem in the same folder as this executable. \n";
         std::exit(-1);
     }
 
-    std::ifstream pub("public.pem");
+    std::ifstream pub(name);
     std::string pubKey = "";
 
     while(getline(pub, plc)) {

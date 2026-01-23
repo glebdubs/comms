@@ -1,11 +1,13 @@
 #include "utils.h"
 
-Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN, const char* privateFN) 
+Comms::Comms(char state, CryptoManager& m, const char* ip, bool verbose, const char* publicFN, const char* privateFN) 
     : clientSocket(-1), serverSocket(-1), manager(&m),
       publicKey(nullptr, &EVP_PKEY_free), 
       privateKey(nullptr, &EVP_PKEY_free),
       foreignPublicKey(nullptr, &EVP_PKEY_free) {
 
+
+    this->verbose = verbose;
     privateKey = manager->loadPrivateKeyFromFile(privateFN, *manager);
     publicKey  = manager->loadPublicKeyFromFile(publicFN, *manager);
 
@@ -38,32 +40,56 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
 
         std::cout << "Server is listening on port 8080...\n";
 
+        if(verbose) std::cout << "Attempting accept call to server socket \n";
+
         clientSocket = accept(serverSocket, nullptr, nullptr);
         if(clientSocket < 0) {
             std::cerr << "Accept failed. \n";
             std::exit(-1);
         }
 
-        std::cout << "Accepted, connecting... \n";
+        if(verbose) std::cout << "Accepted, connecting... \n";
 
         // await ping to ensure connection stability.
  
         std::string pingMessage = getMessage();
-        if(pingMessage == "ping") {
-            sendMessage("return ping");
-            std::cout << "Plaintext connection stable. Encrypting... \n";
-            getMessage();
-            sendMessage(manager->plaintextPublicKey);
-        } else {
-            sendMessage("return ping");
-            std::cout << "Connection unstable. Attempting encryption... \n";
-            getMessage();
-            sendMessage(manager->plaintextPublicKey);
+        if(verbose) std::cout << "Received client ping. \n";
+        sendMessage("return ping");
+        if(verbose) std::cout << "Sent return ping. \n";
 
+        if(verbose) {
+            if(pingMessage == "ping") std::cout << "Plaintext connection stable. Encrypting... \n";
+            else                      std::cout << "Connection unstable. Attempting encryption... \n";
         }
 
+        getMessage();
+        sendMessage(manager->plaintextPublicKey);
+        if(verbose) std::cout << "Sent own public key. \n";
+        
         std::string keyData = Comms::getMessage();
+        if(verbose) std::cout << "Received foreign public key raw data. \n";
         foreignPublicKey = manager->loadPublicKey(keyData);
+        if(verbose) std::cout << "Loaded foreign public key data into EVP_PKEY_ptr type. \n";
+
+        if(pipe(ptc) == -1 || pipe(ctp) == -1) {
+            std::string error = "Establishing terminal pipe failed. Server shutting down. \n";
+            sendEncryptedMessage(error);
+            std::cout << error;
+            std::exit(-1);
+        }
+
+        if(verbose) std::cout << "Terminal pipes constructed successfully. \n";
+
+        pid = fork();
+
+        if(pid < 0) {
+            std::string error = "getting PID from fork failed. Server shutting down. \n";
+            sendEncryptedMessage(error);
+            std::cout << error;
+            std::exit(-1);
+        }
+
+        if(verbose) std::cout << "Fork operation and PID returned successfully. \n";
 
 
     } else if(state == 'c') {
@@ -80,31 +106,38 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, const char* publicFN,
         serverAddress.sin_port = htons(8080);
 
         // verifying address validity
+        if(verbose) std::cout << "Verifying given IP address validity... \n";
         if(inet_pton(AF_INET, ip, &serverAddress.sin_addr) <= 0) {
             std::cerr << "Invalid Address / Address not supported. \n";
             std::exit(-1);
         }
 
-        std::cout << "Connecting... \n";
+        if(verbose) std::cout << "Connecting... \n";
 
         if(connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
             std::cerr << "Connection failed. Is the server running, dumbass? \n";
             std::exit(-1);
         }
 
-        std::cout << "Connected. \n";
+        if(verbose) std::cout << "Connected. \n";
 
         // running a ping circuit to server and back to ensure connection consistency
-        if(Comms::ping()) std::cout << "Connection successfully established. \n";
-        else {
-            std::cout << "Ping failed. Connection successful, although may be inconsistent. Take care. \n";
+        bool pingRes = Comms::ping();
+        if(verbose) {
+            if(pingRes) std::cout << "Connection successfully established. \n";
+            else        std::cout << "Ping failed. Connection successful, although may be inconsistent. Take care. \n";
         }
 
-	sendMessage("ready_for_key");
-	std::string keyData = Comms::getMessage();
-    foreignPublicKey = manager->loadPublicKey(keyData);
+        sendMessage("ready_for_key");
+        std::string keyData = Comms::getMessage();
+        if(verbose) std::cout << "Received foreign public key raw data. \n";
+        foreignPublicKey = manager->loadPublicKey(keyData);
+        if(verbose) std::cout << "Loaded foreign public key data into EVP_PKEY_ptr type. \n";
 
-    Comms::sendEncryptedMessage(manager->plaintextPublicKey);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        Comms::sendMessage(manager->plaintextPublicKey);
+        if(verbose) std::cout << "Sent own plaintext public key.\n";
 
     }
 
@@ -139,20 +172,21 @@ void Comms::sendBytes(const std::vector<unsigned char>& bytes) {
 
 std::string Comms::getEncryptedMessage() {
     std::vector<unsigned char> buffer(1024);
-    recv(clientSocket, buffer.data(), buffer.size(), 0);
+    ssize_t bytesRead = recv(clientSocket, buffer.data(), buffer.size(), 0);
+    buffer.resize(bytesRead);
 
     std::string plaintext = CryptoManager::decrypt(privateKey.get(), buffer); 
 
     if(plaintext == "") {
-	std::cout << "Connection lost, or received empty message. Continue operation? (y/n) ";
-	char inp;
-	std::cin >> inp;
-	if(inp == 'y' || inp == 'Y') {
-		std::cout << "continuing. \n";
-	} else {
-		std::cout << "quitting. \n";
-		std::exit(0);
-	}
+        std::cout << "Connection lost, or received empty message. Continue operation? (y/n) ";
+        char inp;
+        std::cin >> inp;
+        if(inp == 'y' || inp == 'Y') {
+            std::cout << "continuing. \n";
+        } else {
+            std::cout << "quitting. \n";
+            std::exit(0);
+        }
     }
 
     return plaintext;
