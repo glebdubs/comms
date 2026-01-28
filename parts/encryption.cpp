@@ -87,7 +87,7 @@ CryptoManager::EVP_PKEY_ptr CryptoManager::loadPrivateKeyFromFile(const std::str
         std::exit(-1);
     }
 
-    std::ifstream priv(name);
+    std::ifstream priv("keys/"+name);
     std::string privKey = "";
     
     std::string plc;
@@ -106,7 +106,7 @@ CryptoManager::EVP_PKEY_ptr CryptoManager::loadPublicKeyFromFile(const std::stri
         std::exit(-1);
     }
 
-    std::ifstream pub(name);
+    std::ifstream pub("keys/"+name);
     std::string pubKey = "";
 
     while(getline(pub, plc)) {

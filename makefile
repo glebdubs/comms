@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17
 LDFLAGS = -lcrypto
 
-TARGET = exec
+TARGET = server
 
 SRCS = main.cpp parts/encryption.cpp parts/utils.cpp
 OBJS = $(SRCS:.cpp=.o)

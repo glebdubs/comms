@@ -10,3 +10,4 @@ server
 *.o
 .DS_Store
 exec
+othershittodo.txt
