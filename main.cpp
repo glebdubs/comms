@@ -65,27 +65,35 @@ int main(int argc, char* argv[]) {
             
             if(message == "quit") {
                 running = false;
-                response = "Quitting now...\n";
+                response = "Quitting now...\n __FINISHED__";
                 c->sendEncryptedMessage(response);
                 
             } else if (message == "mr penis") {
-                response = "mr balls\n";
+                response = "mr balls\n __FINISHED__";
                 c->sendEncryptedMessage(response);
             } else {
+                message += "; echo __FINISHED__ \n";
                 write(c->ptc[1], message.c_str(), message.length());
 
                 char buffer[896];
                 response = "";
                 ssize_t bytesRead;
 
-                while((bytesRead = read(c->ctp[0], buffer, sizeof(buffer)-1)) > 0) {
+                while((bytesRead = read(c->ctp[0], buffer, sizeof(buffer)-1)) > 4) {
                     buffer[bytesRead] = '\0';
                     response = buffer;
+                    
+                    cout << "SENDING :: " << response;
                     c->sendEncryptedMessage(response);
+                    if(response.find("__FINISHED__") != std::string::npos) {
+                        response.erase(response.find("__FINISHED__"));
+                        // cout << response;
+                        break;
+                    } else cout << response;
                 }
                 
             }
-            // cout << "response : " << response << "\n";
+            cout << "response : " << response << "\n";
             // c->sendEncryptedMessage(response);
         }
 
@@ -112,9 +120,23 @@ int main(int argc, char* argv[]) {
 
             c->sendEncryptedMessage(message);
             response = c->getEncryptedMessage();
+            bool lastMessage = false;
+            //cout << "initial : " << response << endl;
 
-            if(response != "")
-                cout << "Response from server: " << response;
+            if(response != "") {
+                cout << "Response from server: ";
+                do{
+                    lastMessage = response.find("__FINISHED__") != std::string::npos;
+                    if(lastMessage) response.erase(response.find("__FINISHED__"));
+                    
+                    // response += '\n';
+                    cout << response;
+                    
+                    // if(lastMessage) cout << "last message!!!!!";
+                    if(!lastMessage) response = c->getEncryptedMessage();
+                } while(!lastMessage);
+                // cout << "Response from server: " << response;
+            }
 
             if(message == "quit") running = false;
         }

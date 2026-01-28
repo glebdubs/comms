@@ -28,7 +28,7 @@ Comms::Comms(char state, CryptoManager& m, const char* ip, bool verbose, const c
         serverAddress.sin_port = htons(8080);
         serverAddress.sin_addr.s_addr = INADDR_ANY;
 
-            if(bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
+        if(bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
             std::cerr << "Bind failed, try a different port or check if its in use. \n";
             std::exit(-1);
         }
@@ -173,11 +173,8 @@ void Comms::sendBytes(const std::vector<unsigned char>& bytes) {
 std::string Comms::getEncryptedMessage() {
     std::vector<unsigned char> buffer(1024);
     ssize_t bytesRead = recv(clientSocket, buffer.data(), buffer.size(), 0);
-    buffer.resize(bytesRead);
 
-    std::string plaintext = CryptoManager::decrypt(privateKey.get(), buffer); 
-
-    if(plaintext == "") {
+    if(bytesRead <= 0) {
         std::cout << "Connection lost, or received empty message. Continue operation? (y/n) ";
         char inp;
         std::cin >> inp;
@@ -188,6 +185,10 @@ std::string Comms::getEncryptedMessage() {
             std::exit(0);
         }
     }
+
+    buffer.resize(static_cast<size_t>(bytesRead));
+
+    std::string plaintext = CryptoManager::decrypt(privateKey.get(), buffer); 
 
     return plaintext;
 }
