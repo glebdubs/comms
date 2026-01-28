@@ -9,3 +9,4 @@ server
 *.swp
 *.o
 .DS_Store
+exec

@@ -1,5 +1,5 @@
-#include "encryption.h"
-#include "utils.h"
+#include "parts/encryption.h"
+#include "parts/utils.h"
 
 #include <memory>
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
             message = c->getEncryptedMessage();
             cout << "message from client : " << message << "\n";
 
-            
+            cout << "response: ";
             if(message == "quit") {
                 running = false;
                 response = "Quitting now...\n __FINISHED__";
@@ -83,17 +83,17 @@ int main(int argc, char* argv[]) {
                     buffer[bytesRead] = '\0';
                     response = buffer;
                     
-                    cout << "SENDING :: " << response;
+                    // cout << "SENDING :: " << response;
                     c->sendEncryptedMessage(response);
                     if(response.find("__FINISHED__") != std::string::npos) {
                         response.erase(response.find("__FINISHED__"));
-                        // cout << response;
+                        cout << response;
                         break;
                     } else cout << response;
                 }
                 
             }
-            cout << "response : " << response << "\n";
+            // cout << "response : " << response << "\n";
             // c->sendEncryptedMessage(response);
         }
 
